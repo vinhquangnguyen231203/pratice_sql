@@ -1,0 +1,30 @@
+Buffer pool là khu vực bộ nhớ trong hệ thống máy chủ MySQL mà InnoDB sử dụng để 
+lưu trữ dữ liệu và chỉ mục. Điều này giúp giảm số lượng truy cập đĩa cần thiết
+, vì các truy vấn có thể truy cập dữ liệu trực tiếp từ bộ nhớ thay vì từ đĩa cứng
+, điều này giúp tăng tốc độ truy vấn.
+-SHOW ENGINE INNODB STATUS;
+-SHOW GLOBAL STATUS LIKE 'Innodb_buffer_pool%';
+InnoDB là một engine lưu trữ (storage engine) cho cơ sở dữ liệu MySQL, 
+được thiết kế để hỗ trợ các tính năng quan trọng như giao dịch (transactions), 
+khóa hàng (row-level locking), và khôi phục sau sự cố (crash recovery). 
+Đây là một trong những engine lưu trữ phổ biến nhất cho MySQL và cung cấp 
+nhiều lợi ích về hiệu suất và tính toàn vẹn dữ liệu.
+->InnoDB được lựa chọn phổ biến trong các ứng dụng yêu cầu tính toàn vẹn dữ liệu cao
+ và hỗ trợ nhiều giao dịch đồng thời, như các ứng dụng thương mại điện tử, 
+ hệ thống tài chính, và nhiều ứng dụng doanh nghiệp khác.
+Redo log là một cơ chế quan trọng trong InnoDB để đảm bảo tính toàn vẹn
+ và khả năng khôi phục dữ liệu. Nó ghi lại tất cả các thay đổi trước khi chúng
+  được ghi vào dữ liệu chính, cho phép khôi phục dữ liệu về trạng thái nhất quán sau sự cố.
+DML (Data Manipulation Language) là một phần của SQL (Structured Query Language) 
+dùng để thao tác và quản lý dữ liệu trong cơ sở dữ liệu: Select,insert, update,delete
+Cơ Sở Dữ Liệu (Database Storage)
+Engine Lưu Trữ (Storage Engine): MySQL hỗ trợ nhiều engine lưu trữ,
+ bao gồm InnoDB, MyISAM, MEMORY, và nhiều hơn nữa. Mỗi engine có các
+  đặc điểm và chức năng riêng, như hỗ trợ giao dịch, khóa hàng, hoặc chỉ mục full-text.
+Dữ Liệu và Chỉ Mục: Các dữ liệu và chỉ mục được lưu trữ trong các file 
+hoặc tablespace dựa trên engine lưu trữ.
+Cơ Chế Quản Lý Dữ Liệu
+Redo Log: Ghi lại các thay đổi dữ liệu để đảm bảo khả năng khôi phục sau sự cố.
+Undo Log: Dùng để hoàn tác các thay đổi trong các giao dịch.
+Binary Log: Ghi lại tất cả các thay đổi dữ liệu để hỗ trợ sao lưu và phục hồi, cũng như replication.
+
