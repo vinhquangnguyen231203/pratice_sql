@@ -418,7 +418,73 @@ and masp not in (
 								)
 				);
 
+-- cho biết khách hàng nào có số lượt mua hàng > =3
+select makh, count(sohd) as "so luot mua hang"
+from hoadon
+group by makh
+having count(*) >= 3;
+
+-- In ra khach hang cos so luot mua hang nhieu nhat
+select makh, count(sohd)
+from hoadon
+group by makh
+having count(*) >= all (
+						select count(*)
+                        from hoadon
+                        group by makh
+						);
+
+-- in ra khach hang co so luot mua hang it nhat
+select makh, count(sohd)
+from hoadon
+group by makh
+having count(*) <= all(
+					select count(*)
+                    from hoadon
+                    group by makh
+					);
+                    
+-- top 3 khach hang xịn xò nhất năm 2024
+select makh, sum(trigia)
+from hoadon
+where year(nghd) = 2024
+group by makh
+order by sum(trigia) 
+limit 3;
+
+
 -- 18 - Tìm số hóa đơn đã mua tất cả các sản phẩm do Singapore sản xuất
+select sohd
+from hoadon
+where not exists (
+	select masp
+    from sanpham
+    where nuocsx = "Singapore"
+    and not exists (
+		select sohd, masp
+        from cthd
+        where cthd.masp = sanpham.masp
+        and cthd.sohd = hoadon.sohd
+    )
+);
+
+-- cách 2
+select sohd, count(*)
+from cthd
+where masp in (
+	select masp
+    from sanpham
+    where nuocsx = 'Singapore'
+)
+group by sohd
+having count(*) >= all(
+	select count(*)
+    from sanpham
+    where nuocsx = 'Singapore'
+);
+
+
+		
 
 -- 19 - Tìm số hóa đơn trong năm 2006 đã mua ít nhất tất cả các sản phẩm do Singapore sản xuất.
 SELECT sohd
@@ -435,103 +501,326 @@ HAVING COUNT(DISTINCT masp) = (
     WHERE nuocsx = 'Singapore'
 ) AND YEAR(nghd) = 2006;
 
+-- Myself
+-- sohd, nuocsx
+
+
 -- 20 -  Có bao nhiêu hóa đơn không phải của khách hàng đăng ký thành viên mua?
-SELECT COUNT(*)
-FROM hoadon
-WHERE makh NOT IN (
-    SELECT makh
-    FROM khachhang
-    WHERE loaikh IS NOT NULL
-);
+
+
+-- Fix
+select *
+from hoadon
+where makh is null;
 
 -- 21 - Có bao nhiêu sản phẩm khác nhau được bán ra trong năm 2006?
-SELECT COUNT(DISTINCT masp)
-FROM cthd c
-JOIN hoadon h ON c.sohd = h.sohd
-WHERE YEAR(h.nghd) = 2006;
+
+
+-- Fix
+select distinct masp
+from cthd c, hoadon h
+where c.sohd = h.sohd
+and year(h.nghd) = 2006;
 
 -- 22 -  Cho biết trị giá hóa đơn cao nhất, thấp nhất là bao nhiêu?
-SELECT MAX(trigia) AS max_trigia, MIN(trigia) AS min_trigia
-FROM hoadon
-WHERE YEAR(nghd) = 2006;
+
+
+-- fix
+select max(trigia) as 'Giá trị cao nhất', min(trigia) as 'giá trị thấp nhất'
+from hoadon;
+
 
 -- 23 - Trị giá trung bình của tất cả các hóa đơn được bán ra trong năm 2006 là bao nhiêu?
-SELECT AVG(trigia) AS avg_trigia
-FROM hoadon
-WHERE YEAR(nghd) = 2006;
+
+
+-- fix
+select avg(trigia) as 'Trị giá trung bình'
+from hoadon
+where year(nghd) = 2006;
+
  -- 24 - Tính doanh thu bán hàng trong năm 2006.
- SELECT SUM(trigia) AS total_revenue
-FROM hoadon
-WHERE YEAR(nghd) = 2006;
+
+-- fix
+select sum(trigia) as 'Doanh thu'
+from hoadon
+where year(nghd) = 2006;
 
 -- 25 - Tìm số hóa đơn có trị giá cao nhất trong năm 2006.
-SELECT sohd
-FROM hoadon
-WHERE YEAR(nghd) = 2006
-ORDER BY trigia DESC
-LIMIT 1;
+
+-- fix
+select sohd
+from hoadon
+where year(nghd) = 2006
+and trigia = (
+				select max(trigia)
+                from hoadon
+                where year(nghd) = 2006
+			);
+
 
 -- 26. Tìm họ tên khách hàng đã mua hóa đơn có trị giá cao nhất trong năm 2006.
-SELECT kh.hoten
-FROM hoadon h
-JOIN khachhang kh ON h.makh = kh.makh
-WHERE h.sohd = (
-    SELECT sohd
-    FROM hoadon
-    WHERE YEAR(nghd) = 2006
-    ORDER BY trigia DESC
-    LIMIT 1
-);
+-- fix
+select makh
+from hoadon
+where year(nghd)=2006 
+group by makh
+having sum(trigia) >= all (
+							select sum(trigia)
+                            from hoadon
+                            where year(nghd) = 2006
+                            group by makh
+						);
+
+
 
 -- 27 - 27. In ra danh sách 3 khách hàng (MAKH, HOTEN) có doanh số cao nhất.
-SELECT makh, hoten
-FROM khachhang
-ORDER BY doanhso DESC
-LIMIT 3;
+-- fix
+select makh, hoten
+from khachhang
+order by doanhso desc 
+limit 3;
 
 -- 28 - In ra danh sách các sản phẩm (MASP, TENSP) có giá bán bằng 1 trong 3 mức giá cao nhất.
-SELECT masp, tensp
-FROM sanpham
-WHERE gia IN (
-    SELECT DISTINCT gia
-    FROM sanpham
-    ORDER BY gia DESC
-    LIMIT 3
-);
+-- fix
+select masp, tensp
+from sanpham sp join (
+		select distinct gia
+        from sanpham
+        order by gia desc 
+        limit 3
+) tmp
+where sp.gia = tmp.gia;
+
 
 -- 29 - In ra danh sách các sản phẩm (MASP, TENSP) do “Thai Lan” sản xuất có giá bằng 1 trong 3 mức giá cao nhất (của tất cả các sản phẩm).
 
-SELECT masp, tensp
-FROM sanpham
-WHERE nuocsx = 'Thai Lan' AND gia IN (
-    SELECT DISTINCT gia
-    FROM sanpham
-    ORDER BY gia DESC
-    LIMIT 3
-);
+select masp, tensp
+from sanpham sp join (
+			select distinct gia
+            from sanpham
+            order by gia desc 
+            limit 3
+) tmp
+where sp.gia = tmp.gia
+and sp.nuocsx = "Thai Lan";
 
 -- 30 - In ra danh sách các sản phẩm (MASP, TENSP) do “Trung Quoc” sản xuất có giá bằng 1 
 -- trong 3 mức giá cao nhất (của sản phẩm do “Trung Quoc” sản xuất).
-SELECT masp, tensp
-FROM sanpham
-WHERE nuocsx = 'Trung Quoc' AND gia IN (
-    SELECT DISTINCT gia
-    FROM sanpham
-    WHERE nuocsx = 'Trung Quoc'
-    ORDER BY gia DESC
-    LIMIT 3
-);
+select masp, tensp
+from sanpham sp join (
+				select distinct gia
+                from sanpham
+                order by gia desc
+                limit 3
+) tmp 
+where sp.gia = tmp.gia
+and sp.nuocsx = "Trung Quoc"
+;
 
 -- 31 - In ra danh sách 3 khách hàng có doanh số cao nhất (sắp xếp theo kiểu xếp hạng).
-SELECT makh, hoten, doanhso
-FROM khachhang
-ORDER BY doanhso DESC
-LIMIT 3;
+select *,
+rank() over(order by doanhso desc) as ranking
+from khachhang
+limit 3
+
+
+-- 32 - Tính tổng số sản phẩm do “Trung Quoc” sản xuất.
+select count(*) as 'Tổng số sản phẩm'
+from sanpham
+where nuocsx = "Trung Quoc";
+
+-- 33 - Tính tổng số sản phẩm của từng nước sản xuất.
+select nuocsx, count(*)
+from sanpham
+group by nuocsx;
+
+-- fix
+select nuocsx, count(masp)
+from sanpham
+group by nuocsx;
+
+-- 34 - Với từng nước sản xuất, tìm giá bán cao nhất, thấp nhất, trung bình của các sản phẩm.
+select nuocsx, max(gia), min(gia), avg(gia)
+from sanpham
+group by nuocsx;
+
+-- 35 -Tính doanh thu bán hàng mỗi ngày.
+select nghd, sum(trigia)
+from hoadon
+group by nghd;
+
+
+-- 36 - Tính tổng số lượng của từng sản phẩm bán ra trong tháng 10/2006.
+select c.masp, s.tensp, sum(c.sl)
+from cthd c
+join hoadon h on c.sohd = h.sohd
+join sanpham s on c.masp = s.masp
+where month(h.nghd) = 10 and year(h.nghd) = 2006
+group by c.masp, s.tensp;
+
+-- fix
+select masp , sum(sl)
+from hoadon h, cthd c
+where c.sohd = h.sohd
+and year(h.nghd) = 2006 and month(h.nghd) = 10
+group by masp;
+
+-- 37 - Tính doanh thu bán hàng của từng tháng trong năm 2006.
+-- Doanh thu từng hóa đơn sẽ bằng số lượng * giá sản phẩm
+select month(nghd), sum(trigia)
+from hoadon
+where year(nghd) = 2006
+group by month(nghd)
 
 
 
 
 
+
+-- 38. Tìm hóa đơn có mua ít nhất 4 sản phẩm khác nhau.
+select sohd, count(masp)
+from cthd
+group by sohd
+having count(masp) >= 4;
+
+
+-- 39. Tìm hóa đơn có mua 3 sản phẩm do “Viet Nam” sản xuất (3 sản phẩm khác nhau).
+select sohd
+from cthd c, sanpham s
+where c.masp = s.masp
+and s.nuocsx = 'Viet Nam'
+group by sohd
+having count(distinct s.masp) = 3;
+
+
+
+
+-- 40. Tìm khách hàng (MAKH, HOTEN) có số lần mua hàng nhiều nhất.
+select makh, count(*) as 'Số lượt mua hàng'
+from hoadon 
+group by makh
+having count(*) >= all(
+	select count(*)
+    from hoadon
+    group by makh
+);
+
+-- cách 2
+select makh, hoten
+from khachhang
+where makh in (
+	select makh
+    from hoadon
+	group by makh
+    having count(*) = (
+			select count(*)
+            from hoadon
+            group by makh
+            order by count(*) desc
+            limit 1
+    )
+);
+
+-- 41. Tháng mấy trong năm 2006, doanh số bán hàng cao nhất ?
+select month(nghd), sum(trigia) as 'Doanh so cao nhat'
+from hoadon
+where year(nghd) = 2006
+group by month(nghd)
+having sum(trigia) >= all(
+	select sum(trigia)
+    from hoadon
+    where year(nghd) = 2006
+    group by month(nghd)
+);
+
+
+-- 42. Tìm sản phẩm (MASP, TENSP) có tổng số lượng bán ra thấp nhất trong năm 2006.
+select c.masp, sum(c.sl)
+from cthd c
+join hoadon h on c.sohd = h.sohd
+where year(h.nghd) = 2006
+group by c.masp
+having sum(c.sl) <= all (
+	select sum(sl)
+    from cthd
+    group by masp
+);
+
+-- 43. *Mỗi nước sản xuất, tìm sản phẩm (MASP,TENSP) có giá bán cao nhất.
+-- cách 1
+	select nuocsx, masp, tensp
+    from sanpham
+    where (nuocsx, gia) in (
+		select nuocsx, max(gia)
+        from sanpham
+        group by nuocsx
+    );
+    
+-- cách 2
+	select nuocsx, masp, tensp
+    from sanpham s1
+    where gia = (
+		select max(gia)
+        from sanpham s2
+        where s2.nuocsx = s1.nuocsx
+    );
+    
+-- Cách 3
+	select nuocsx, masp, tensp
+    from sanpham s,
+    (
+		select nuocsx, max(gia) as 'maxGia'
+        from sanpham
+        group by nuocsx
+    ) tmp
+    where s.nuocsx = tmp.nuocsx
+    and gia = tmp.maxGia;
+
+-- 44. Tìm nước sản xuất sản xuất ít nhất 3 sản phẩm có giá bán khác nhau.
+select nuocsx, count(distinct gia)
+from sanpham
+group by nuocsx
+having count(distinct gia) >= 3;
+
+
+-- 45. *Trong 10 khách hàng có doanh số cao nhất, tìm khách hàng có số lần mua hàng nhiều nhất.
+select makh, count(*)
+from hoadon
+where makh in (
+	select k1.makh
+    from khachhang k1
+    join (
+		select *
+        from khachhang
+        order by doanhso desc
+        limit 10
+    ) k2
+    where k1.makh = k2.makh
+)
+group by makh 
+having count(*) >= all (
+		select count(*)
+        from hoadon
+        where makh in (
+			select k1.makh
+            from khachhang k1
+            join (
+				select *
+                from khachhang
+                order by doanhso desc
+                limit 10
+            ) k2
+            where k1.makh = k2.makh
+            group by makh
+        )
+);
+
+
+-- Tìm 10  khách hàng có số lần mua hàng nhiều nhất
+select *
+from khachhang
+order by doanhso desc
+limit 10
 
 
 
