@@ -190,23 +190,29 @@ insert into CTHD values (1023,'ST04',6);
 -- 1 --In ra danh sách các sản phẩm (MASP,TENSP) do “Trung Quoc” sản xuất.
 select masp, tensp
 from sanpham
-where nuocsx = "Trung Quoc"
+where nuocsx = "Trung Quoc";
+
 
 -- 2 --In ra danh sách các sản phẩm (MASP, TENSP) có đơn vị tính là “cay”, ”quyen”.
 select masp, tensp
 from sanpham
-where dvt in ("cay","quyen")
+where dvt in ("cay","quyen");
+
+-- Cách 2
+select masp, tensp
+from sanpham
+where dvt = "cay" or dvt = "quyen";
 
 -- 3 - In ra danh sách các sản phẩm (MASP,TENSP) có mã sản phẩm bắt đầu là “B” và kết thúc là “01”.
 select masp, tensp
 from sanpham
-where masp like "B%01"
+where masp like "B%01";
 
 -- 4 - In ra danh sách các sản phẩm (MASP,TENSP) do “Trung Quốc” sản xuất có giá từ 30.000 đến
 -- 40.000.
 select masp, tensp
 from sanpham
-where nuocsx= "Trung Quoc" and gia between 30000 and 40000
+where nuocsx= "Trung Quoc" and gia between 30000 and 40000;
 
 -- 5 - In ra danh sách các sản phẩm (MASP,TENSP) do “Trung Quoc” hoặc
 -- “Thai Lan” sản xuất có giá từ
@@ -214,12 +220,17 @@ where nuocsx= "Trung Quoc" and gia between 30000 and 40000
 select masp, tensp
 from sanpham
 where nuocsx in ("Trung Quoc", "Thai Lan")
-and gia between 30000 and 40000
+and gia between 30000 and 40000;
 
 -- 6 In ra các số hóa đơn, trị giá hóa đơn bán ra trong ngày 1/1/2007 và ngày 2/1/2007.
 select sohd,trigia, nghd
 from hoadon
-where nghd in ('2007/1/2','2007/1/1')
+where nghd in ('2007/1/2','2007/1/1');
+
+-- Cách 2
+select sohd, trigia, nghd
+from hoadon
+where nghd = '2007/1/2' or nghd = '2007/1/1';
 
 -- 7 - In ra các số hóa đơn, trị giá hóa đơn trong tháng 1/2007, 
 -- sắp xếp theo ngày (tăng dần) và trị giá của
@@ -228,88 +239,294 @@ where nghd in ('2007/1/2','2007/1/1')
 select sohd, trigia, nghd
 from hoadon
 where month(nghd) = 1 and year(nghd) = 2007
-order by nghd ASC , trigia DESC	
+order by nghd ASC , trigia DESC	;
 
 -- 8 - In ra danh sách các khách hàng (MAKH, HOTEN) đã mua hàng trong ngày 1/1/2007.
 select k.makh, hoten , nghd
 from hoadon h, khachhang k
 where h.makh = k.makh and
-nghd = '2007-1-1'
+nghd = '2007-1-1';
+
+-- Cách 2
+select makh, hoten
+from khachhang 
+where makh in (
+				select makh
+                from hoadon
+                where nghd = '2007/1/1'
+			);
 
 -- 9 - In ra số hóa đơn, trị giá các hóa đơn do nhân viên có tên “Nguyen Van B” lập trong ngày
  -- 28/10/2006.
- select sohd, trigia, nghd, hoten
- from hoadon h, nhanvien nv
-where h.manv in (
-				select nv.manv 
-                from nhanvien
-                where hoten = 'NGUYEN VAN B'
-				)
-and nghd = '2006-10-28'
+select sohd, trigia
+from hoadon
+where manv in (
+			select manv
+            from nhanvien
+            where hoten = "NGUYEN VAN B"
+			)
+and nghd = "2006/10/28";
+
+
 
 -- 10 - In ra danh sách các sản phẩm (MASP,TENSP) được khách hàng 
 -- có tên “Nguyen Van A” mua trong
  -- tháng 10/2006.
-select c.masp, s.tensp, k.hoten, h.nghd
-from cthd c, hoadon h, sanpham s, khachhang k
+select s.masp, s.tensp
+from cthd c, sanpham s
+where c.masp = s.masp
+and sohd in (
+			select sohd
+            from hoadon
+            where makh in (
+							select makh
+                            from khachhang
+                            where hoten = "NGUYEN VAN  A"
+                            )
+			and month(nghd) = 10 and year(nghd)=2006
+			);
+            
+select masp, tensp
+from sanpham
+where masp in (
+				select masp
+                from cthd
+                where sohd in (
+								select sohd
+                                from hoadon
+                                where year(nghd) = 2006 and month(nghd)=10
+                                and makh in (
+											select  makh
+                                            from khachhang
+                                            where hoten = "NGUYEN VAN  A"
+											)
+								)
+				);
+                
+-- Cách 3
+select s.masp, s.tensp
+from cthd c, sanpham s, khachhang k, hoadon h
 where s.masp = c.masp
-and month(h.nghd) = 10 and year(h.nghd) = 2006
-and hoten = "NGUYEN VAN  A"
 and c.sohd = h.sohd
+and h.makh = k.makh
+and month(h.nghd)=10 and year(h.nghd) = 2006
+and k.hoten = "NGUYEN VAN  A";
 
 -- 11 - Tìm các số hóa đơn đã mua sản phẩm có mã số “BB01” hoặc “BB02”.
 
 select distinct sohd
 from cthd
-where masp in (
-				select masp
-                from sanpham s
-                where s.masp in ("BB01", "BB02")
-				)
-                
+where masp in ("BB01","BB02");
                 
 -- 12 - Tìm các số hóa đơn đã mua sản phẩm có mã số “BB01” hoặc “BB02”, 
 -- mỗi sản phẩm mua với số
  -- lượng từ 10 đến 20.
- 
- select distinct c.sohd
- from cthd c
- where c.sl between 10 and 20
-and c.masp in (
-			select s.masp
-            from sanpham s
-            where s.masp in ("BB01","BB02")
-			)
+
+select distinct sohd
+from cthd
+where masp in ("BB01", "BB02")
+and sl between 10 and 20;
 
 -- 13 - Tìm các số hóa đơn mua cùng lúc 2 sản phẩm có mã số “BB01” và “BB02”, mỗi sản phẩm mua với
 -- số lượng từ 10 đến 20.
+(select sohd
+from cthd
+where masp = "BB01"
+and sl between 10 and 20)
+intersect
+(select sohd
+from cthd
+where masp ="BB02"
+and sl between 10 and 20);
 
-                
+-- Cách 2
+select c1.sohd
+from cthd c1
+inner join cthd c2 on c1.sohd = c2.sohd
+where c1.masp = "BB01" and c1.sl between 10 and 20
+and c2.masp = "BB02" and c2.sl between 10 and 20;
+
+
 -- 14 - In ra danh sách các sản phẩm (MASP,TENSP) do “Trung Quoc” sản xuất hoặc các sản phẩm được
 -- bán ra trong ngày 1/1/2007.
-select distinct s.masp, s.tensp
-from sanpham s, hoadon h
-where s.nuocsx = "Trung Quoc" or
-h.nghd = '2007/1/1'
+SELECT masp, tensp
+FROM sanpham
+WHERE nuocsx = "Trung Quoc"
+OR masp IN (
+    SELECT masp 
+    FROM cthd
+    WHERE sohd IN (
+        SELECT sohd
+        FROM hoadon
+        WHERE nghd = "2007/1/1"
+    )
+);
+
+-- cách 2
+SELECT DISTINCT s.masp, s.tensp
+FROM sanpham s
+LEFT JOIN cthd c ON s.masp = c.masp
+LEFT JOIN hoadon h ON c.sohd = h.sohd
+WHERE s.nuocsx = "Trung Quoc" 
+   OR h.nghd = "2007-01-01";
+   
+-- Cách 3
+SELECT DISTINCT s.masp, s.tensp
+FROM sanpham s
+LEFT JOIN cthd c ON s.masp = c.masp
+LEFT JOIN hoadon h ON c.sohd = h.sohd
+WHERE s.nuocsx = "Trung Quoc" 
+   OR h.nghd = "2007-01-01";
+
 
 -- 15 - In ra danh sách các sản phẩm (MASP,TENSP) không bán được.
 --  intersect
 -- exists
 -- not exists
-select s.masp, s.tensp
-from sanpham s
-where not exists (
-		select 1 from cthd c where c.masp = s.masp
-	)
+select masp, tensp
+from sanpham
+where masp not in (
+				select masp
+                from cthd
+				);
+
+
     
 -- 16 - In ra danh sách các sản phẩm (MASP,TENSP) không bán được trong năm 2006.
-select s.masp, s.tensp
-from sanpham s
-where not exists
-(
-	select 1 from cthd c where year(c.nghd) = 2006
-)
+select *
+from sanpham
+where masp not in (
+				select masp 
+                from cthd
+                where sohd in (
+								select masp
+                                from hoadon
+                                where year(nghd) = 2006
+							)
+				);
+-- 17 - In ra danh sách các sản phẩm (MASP,TENSP) do “Trung Quoc” sản xuất không bán được trong năm 2006
+select *
+from sanpham
+where nuocsx = "Trung Quoc"
+and masp not in (
+				select masp
+                from cthd
+                where sohd in (
+								select sohd
+                                from hoadon
+                                where year(nghd) = 2006
+								)
+				);
 
+-- 18 - Tìm số hóa đơn đã mua tất cả các sản phẩm do Singapore sản xuất
+
+-- 19 - Tìm số hóa đơn trong năm 2006 đã mua ít nhất tất cả các sản phẩm do Singapore sản xuất.
+SELECT sohd
+FROM cthd
+WHERE masp IN (
+    SELECT masp
+    FROM sanpham
+    WHERE nuocsx = 'Singapore'
+)
+GROUP BY sohd
+HAVING COUNT(DISTINCT masp) = (
+    SELECT COUNT(DISTINCT masp)
+    FROM sanpham
+    WHERE nuocsx = 'Singapore'
+) AND YEAR(nghd) = 2006;
+
+-- 20 -  Có bao nhiêu hóa đơn không phải của khách hàng đăng ký thành viên mua?
+SELECT COUNT(*)
+FROM hoadon
+WHERE makh NOT IN (
+    SELECT makh
+    FROM khachhang
+    WHERE loaikh IS NOT NULL
+);
+
+-- 21 - Có bao nhiêu sản phẩm khác nhau được bán ra trong năm 2006?
+SELECT COUNT(DISTINCT masp)
+FROM cthd c
+JOIN hoadon h ON c.sohd = h.sohd
+WHERE YEAR(h.nghd) = 2006;
+
+-- 22 -  Cho biết trị giá hóa đơn cao nhất, thấp nhất là bao nhiêu?
+SELECT MAX(trigia) AS max_trigia, MIN(trigia) AS min_trigia
+FROM hoadon
+WHERE YEAR(nghd) = 2006;
+
+-- 23 - Trị giá trung bình của tất cả các hóa đơn được bán ra trong năm 2006 là bao nhiêu?
+SELECT AVG(trigia) AS avg_trigia
+FROM hoadon
+WHERE YEAR(nghd) = 2006;
+ -- 24 - Tính doanh thu bán hàng trong năm 2006.
+ SELECT SUM(trigia) AS total_revenue
+FROM hoadon
+WHERE YEAR(nghd) = 2006;
+
+-- 25 - Tìm số hóa đơn có trị giá cao nhất trong năm 2006.
+SELECT sohd
+FROM hoadon
+WHERE YEAR(nghd) = 2006
+ORDER BY trigia DESC
+LIMIT 1;
+
+-- 26. Tìm họ tên khách hàng đã mua hóa đơn có trị giá cao nhất trong năm 2006.
+SELECT kh.hoten
+FROM hoadon h
+JOIN khachhang kh ON h.makh = kh.makh
+WHERE h.sohd = (
+    SELECT sohd
+    FROM hoadon
+    WHERE YEAR(nghd) = 2006
+    ORDER BY trigia DESC
+    LIMIT 1
+);
+
+-- 27 - 27. In ra danh sách 3 khách hàng (MAKH, HOTEN) có doanh số cao nhất.
+SELECT makh, hoten
+FROM khachhang
+ORDER BY doanhso DESC
+LIMIT 3;
+
+-- 28 - In ra danh sách các sản phẩm (MASP, TENSP) có giá bán bằng 1 trong 3 mức giá cao nhất.
+SELECT masp, tensp
+FROM sanpham
+WHERE gia IN (
+    SELECT DISTINCT gia
+    FROM sanpham
+    ORDER BY gia DESC
+    LIMIT 3
+);
+
+-- 29 - In ra danh sách các sản phẩm (MASP, TENSP) do “Thai Lan” sản xuất có giá bằng 1 trong 3 mức giá cao nhất (của tất cả các sản phẩm).
+
+SELECT masp, tensp
+FROM sanpham
+WHERE nuocsx = 'Thai Lan' AND gia IN (
+    SELECT DISTINCT gia
+    FROM sanpham
+    ORDER BY gia DESC
+    LIMIT 3
+);
+
+-- 30 - In ra danh sách các sản phẩm (MASP, TENSP) do “Trung Quoc” sản xuất có giá bằng 1 
+-- trong 3 mức giá cao nhất (của sản phẩm do “Trung Quoc” sản xuất).
+SELECT masp, tensp
+FROM sanpham
+WHERE nuocsx = 'Trung Quoc' AND gia IN (
+    SELECT DISTINCT gia
+    FROM sanpham
+    WHERE nuocsx = 'Trung Quoc'
+    ORDER BY gia DESC
+    LIMIT 3
+);
+
+-- 31 - In ra danh sách 3 khách hàng có doanh số cao nhất (sắp xếp theo kiểu xếp hạng).
+SELECT makh, hoten, doanhso
+FROM khachhang
+ORDER BY doanhso DESC
+LIMIT 3;
 
 
 
