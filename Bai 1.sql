@@ -621,7 +621,7 @@ and sp.nuocsx = "Trung Quoc"
 select *,
 rank() over(order by doanhso desc) as ranking
 from khachhang
-limit 3
+limit 3;
 
 
 -- 32 - Tính tổng số sản phẩm do “Trung Quoc” sản xuất.
@@ -670,7 +670,7 @@ group by masp;
 select month(nghd), sum(trigia)
 from hoadon
 where year(nghd) = 2006
-group by month(nghd)
+group by month(nghd);
 
 
 
