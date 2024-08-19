@@ -431,7 +431,7 @@ select  CONCAT(nv.honv, ' ', nv.tenlot, ' ', nv.tennv) AS ho_ten_nv_quan_ly,
 		count(nv1.manv) as so_nv_dang_quan_ly
 from nhanvien nv
 left join nhanvien nv1 on nv.manv = nv1.ma_nql
-group by nv.manv, nv.honv, nv.tenlot, nv.tennv
+group by nv.manv, nv.honv, nv.tenlot, nv.tennv;
 
 -- 28. Với mỗi phòng ban, liệt kê tên phòng ban và lương trung bình của
 -- những nhân viên làm việc cho phòng ban đó.
@@ -439,5 +439,112 @@ group by nv.manv, nv.honv, nv.tenlot, nv.tennv
 -- phòng ban và số lượng nhân viên của phòng ban đó.
 -- 30. Với mỗi phòng ban, cho biết tên phòng ban và số lượng đề án mà
 -- phòng ban đó chủ trì
+
+-- 45. Cho biết danh sách các công việc (tên công việc) trong đề án 'Sản 
+-- phẩm X' mà nhân viên có mã là 009 chưa làm. 
+select cv.ten_cong_viec
+from congviec cv
+join dean da on da.mada = cv.mada
+where da.tenda= 'Sản phẩm X'
+and cv.stt not in (
+	select stt
+    from phancong pc
+    where pc.ma_nvien = "009"
+    and pc.mada = cv.mada
+);
+
+-- 46. Tìm họ tên (HONV, TENLOT, TENNV) và địa chỉ (DCHI) của những 
+-- nhân viên làm việc cho một đề án ở 'TP HCM' nhưng phòng ban mà họ 
+-- trực thuộc lại không tọa lạc ở thành phố 'TP HCM' .  
+
+
+-- 47. Tổng quát câu 16, tìm họ tên và địa chỉ của các nhân viên làm việc cho 
+-- một đề án ở một thành phố nhưng phòng ban mà họ trực thuộc lại 
+-- không toạ lạc ở thành phố đó.
+-- 48. Danh sách những nhân viên (HONV, TENLOT, TENNV) làm việc trong 
+-- mọi đề án của công ty 
+	select concat(nv.honv, ' ', nv.tenlot, ' ', nv.tennv) as ho_ten
+    from nhanvien nv
+    where not exists (
+		select da.mada
+        from dean da
+        where not exists (
+			select pc.mada, pc.ma_nvien
+            from phancong pc
+            where pc.mada = da.mada
+            and pc.ma_nvien = nv.manv
+        )
+    );
+
+-- 49. Danh sách những nhân viên (HONV, TENLOT, TENNV) được phân công 
+-- tất cả đề án do phòng số 4 chủ trì. 
+	select concat(nv.honv, ' ', nv.tenlot,' ', nv.tennv) as ho_ten
+	from nhanvien nv
+    where not exists (
+		select da.mada
+        from dean da
+        where phong = 4
+        and not exists (
+			select pc.ma_nvien, pc.mada
+            from phancong pc
+            where pc.ma_nvien = nv.manv
+            and pc.mada = da.mada
+        )
+    );
     
+-- 50. Tìm những nhân viên (HONV, TENLOT, TENNV) được phân công tất cả 
+-- đề án mà nhân viên 'Đinh Bá Tiến' làm việc 
+	select concat(nv.honv, ' ', nv.tenlot, ' ', nv.tennv) as nhanvien
+    from nhanvien nv
+    where not exists(
+		select 
+    );
+
+
+-- 51. Cho biết những nhân được phân công cho tất cả các công việc trong đề 
+-- án 'Sản phẩm X' 
+-- 52. Cho biết danh sách nhân viên tham gia vào tất cả các đề án ở TP HCM 
+-- 53. Cho biết phòng ban chủ trì tất cả các đề án ở TP HCM 
+-- câu 54: cho biết họ tên nhân viên làm việc vất vả nhất
+	select concat(nv.honv, ' ', nv.tenlot, ' ', nv.tennv) as ho_ten,
+			sum(pc.thoigian) as tong_thoi_gian
+	from nhanvien nv
+    join phancong pc on pc.ma_nvien = nv.manv
+    group by nv.honv, nv.tenlot, nv.tennv
+    having sum(pc.thoigian) >= all(
+		select sum(pc.thoigian)
+        from phancong pc
+		group by pc.ma_nvien
+    );
+
+-- câu 55: Cho biết họ tên nhân viên làm việc nhàn hạ nhất
+select concat(nv.honv, ' ', nv.tenlot, ' ', nv.tennv) as ho_ten,
+			sum(pc.thoigian) as tong_thoi_gian
+	from nhanvien nv
+    join phancong pc on pc.ma_nvien = nv.manv
+    group by nv.honv, nv.tenlot, nv.tennv
+    having sum(pc.thoigian) <= all(
+		select sum(pc.thoigian)
+        from phancong pc
+		group by pc.ma_nvien
+    );
+-- Câu 56: Cho biết họ tên nhân viên làm việc đa dạng  nhiều công việc nhất
+	select concat(nv.honv, ' ', nv.tenlot, ' ', nv.tennv) as ho_ten,
+		count(*)
+    from nhanvien nv
+    join phancong pc on pc.ma_nvien = nv.manv
+    group by nv.honv, nv.tenlot, nv.tennv
+    having count(*) >= all (
+		select count(*)
+        from phancong pc
+        group by pc.ma_nvien
+    );
+    
+
+-- câu 57: Cho biết 2 họ tên nhân viên việc nhẹ lương cao nhất
+	
+
+
+
+
     
